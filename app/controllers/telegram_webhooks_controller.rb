@@ -160,6 +160,16 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   end
 
   def start_search!
+    unless can_search?
+      select_state_message = 'Ми не закінчили підготовчу роботу:'
+      respond_with :message, text: select_state_message, reply_markup: {
+        inline_keyboard: current_keyboard,
+        resize_keyboard: true,
+        one_time_keyboard: true,
+        selective: true
+      }
+      return
+    end
     start_message_text = " *Я почав пошук*!\n" \
                          'Будь ласка зачекайте.  Це може зайняти деякий час!'
     respond_with :message, text: start_message_text, parse_mode: 'Markdown'
@@ -249,17 +259,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   end
 
   def start_search_process
-    unless can_search?
-      select_state_message = 'Ми не закінчили підготовчу роботу:'
-      respond_with :message, text: select_state_message, reply_markup: {
-        inline_keyboard: current_keyboard,
-        resize_keyboard: true,
-        one_time_keyboard: true,
-        selective: true
-      }
-      return
-    end
-p '************************************* SEARCH START **********************************'
+    p '************************************* SEARCH START **********************************'
     org = all_owners.detect{ |k, v| v == session[:owner] }.first.to_s
     key_word_text = session[:keywords].split(' ').map { |key| URI.encode(key) }.join('+')
     textl = search_type_list.detect{ |k, v| v == session[:search_type] }.first.to_s
