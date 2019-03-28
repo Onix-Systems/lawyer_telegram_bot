@@ -259,7 +259,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
       }
       return
     end
-
+p '************************************* SEARCH START **********************************'
     org = all_owners.detect{ |k, v| v == session[:owner] }.first.to_s
     key_word_text = session[:keywords].split(' ').map { |key| URI.encode(key) }.join('+')
     textl = search_type_list.detect{ |k, v| v == session[:search_type] }.first.to_s
@@ -272,5 +272,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     results = data.map do |law|
       { text: law.content, url: law.search('a').first['href'] }
     end
+    p results
+    results
   end
 end
