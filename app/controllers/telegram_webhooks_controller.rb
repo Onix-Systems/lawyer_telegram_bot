@@ -84,7 +84,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
         }
       else
         return unless valid_context_data(owners_list_main.values[0...-1] + additional_owners_list.values,
-                                         current_callback_message)
+                                         current_callback_message, :owner!)
 
         session[:owner] = current_callback_message
         select_state_message = 'Продовжимо:'
@@ -120,7 +120,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
         }
       else
         return unless valid_context_data(document_list_main.values[0...-1] + additional_documents_list.values,
-                                         current_callback_message)
+                                         current_callback_message, :document_type!)
 
         session[:document_type] = current_callback_message
         select_state_message = 'Продовжимо:'
@@ -146,7 +146,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   def search_type!(data = nil, *)
     if data
       return unless valid_context_data(search_type_list.values,
-                                       current_callback_message)
+                                       current_callback_message, :search_type!)
 
       session[:search_type] = current_callback_message
       select_state_message = 'Продовжимо:'
@@ -240,7 +240,13 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   end
 
   def message(message)
-    respond_with :message, text: t('.content', text: message['text'])
+    error_message = "На жаль команда *#{message}* мені невідома!"
+    respond_with :message, text: error_message, parse_mode: 'Markdown', reply_markup: {
+      inline_keyboard: current_keyboard,
+      resize_keyboard: true,
+      one_time_keyboard: true,
+      selective: true
+    }
   end
 
   def current_callback_message
@@ -258,6 +264,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   end
 
   def init_session
+    session[:is_started] = false
     session[:state] = :start
     session[:keywords] = ''
     session[:owner] = ''
@@ -288,11 +295,11 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     results
   end
 
-  def valid_context_data(valid_values, callback_message)
+  def valid_context_data(valid_values, callback_message, _context)
     return true if valid_values.include? callback_message
 
-    error_message = "Нажаль варіант *#{callback_message}* не є допустимим! Спробуйте ще раз!"
-    respond_with :message, text: error_message, reply_markup: {
+    error_message = "На жаль варіант *#{callback_message}* не є допустимим! Спробуйте ще раз!"
+    respond_with :message, text: error_message, parse_mode: 'Markdown', reply_markup: {
       inline_keyboard: current_keyboard,
       resize_keyboard: true,
       one_time_keyboard: true,
