@@ -145,6 +145,9 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
 
   def search_type!(data = nil, *)
     if data
+      return unless valid_context_data(search_type_list.values,
+                                       current_callback_message)
+
       session[:search_type] = current_callback_message
       select_state_message = 'Продовжимо:'
       respond_with :message, text: select_state_message, reply_markup: {
@@ -154,9 +157,6 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
         selective: true
       }
     else
-      return unless valid_context_data(search_type_list.values,
-                                       current_callback_message)
-
       save_context :search_type!
       list = search_type_list.values.each_slice(1).to_a
       respond_with :message, text: 'Оберіть тип пошуку:', reply_markup: {
