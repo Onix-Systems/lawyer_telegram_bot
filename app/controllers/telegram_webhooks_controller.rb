@@ -269,12 +269,15 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
 
   def start_search_process
     p '************************************* SEARCH START **********************************'
+    p session
     org = all_owners.detect { |_k, v| v == session[:owner] }.first.to_s
     key_word_text = session[:keywords].split(' ').map { |key| URI.encode(key) }.join('+')
     textl = search_type_list.detect { |_k, v| v == session[:search_type] }.first.to_s
     typ = all_types.detect { |_k, v| v == session[:document_type] }.first.to_s
     url = "https://zakon.rada.gov.ua/laws/main?find=2&dat=00000000&user=a&text=#{key_word_text}+&textl=#{textl}&bool=and&org=#{org}&typ=#{typ}&datl=0&yer=0000&mon=00&day=00&numl=2&num=&minjustl=2&minjust="
 
+    p url
+    p '************************************* END DEBUG **********************************'
     html = open(url)
     doc = Nokogiri::HTML(html)
     data = doc.search('div.docs div.doc')
