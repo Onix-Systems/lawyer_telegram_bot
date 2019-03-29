@@ -240,7 +240,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   end
 
   def message(message)
-    error_message = "На жаль команда *#{message}* мені невідома!"
+    error_message = "На жаль команда *#{message['text']}* мені невідома!"
     respond_with :message, text: error_message, parse_mode: 'Markdown', reply_markup: {
       inline_keyboard: current_keyboard,
       resize_keyboard: true,
