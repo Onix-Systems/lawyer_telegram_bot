@@ -83,6 +83,9 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
           selective: true
         }
       else
+        return unless valid_context_data(owners_list_main.values[0...-1] + additional_owners_list.values,
+                                         current_callback_message)
+
         session[:owner] = current_callback_message
         select_state_message = 'Продовжимо:'
         respond_with :message, text: select_state_message, reply_markup: {
@@ -116,6 +119,9 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
           selective: true
         }
       else
+        return unless valid_context_data(document_list_main.values[0...-1] + additional_documents_list.values,
+                                         current_callback_message)
+
         session[:document_type] = current_callback_message
         select_state_message = 'Продовжимо:'
         respond_with :message, text: select_state_message, reply_markup: {
@@ -148,6 +154,9 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
         selective: true
       }
     else
+      return unless valid_context_data(search_type_list.values,
+                                       current_callback_message)
+
       save_context :search_type!
       list = search_type_list.values.each_slice(1).to_a
       respond_with :message, text: 'Оберіть тип пошуку:', reply_markup: {
@@ -260,10 +269,10 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
 
   def start_search_process
     p '************************************* SEARCH START **********************************'
-    org = all_owners.detect{ |k, v| v == session[:owner] }.first.to_s
+    org = all_owners.detect { |_k, v| v == session[:owner] }.first.to_s
     key_word_text = session[:keywords].split(' ').map { |key| URI.encode(key) }.join('+')
-    textl = search_type_list.detect{ |k, v| v == session[:search_type] }.first.to_s
-    typ = all_types.detect{ |k, v| v == session[:document_type] }.first.to_s
+    textl = search_type_list.detect { |_k, v| v == session[:search_type] }.first.to_s
+    typ = all_types.detect { |_k, v| v == session[:document_type] }.first.to_s
     url = "https://zakon.rada.gov.ua/laws/main?find=2&dat=00000000&user=a&text=#{key_word_text}+&textl=#{textl}&bool=and&org=#{org}&typ=#{typ}&datl=0&yer=0000&mon=00&day=00&numl=2&num=&minjustl=2&minjust="
 
     html = open(url)
@@ -274,5 +283,18 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     end
     p results
     results
+  end
+
+  def valid_context_data(valid_values, callback_message)
+    return true if valid_values.include? callback_message
+
+    error_message = "Нажаль варіант *#{callback_message}* не є допустимим! Спробуйте ще раз!"
+    respond_with :message, text: error_message, reply_markup: {
+      inline_keyboard: current_keyboard,
+      resize_keyboard: true,
+      one_time_keyboard: true,
+      selective: true
+    }
+    false
   end
 end
